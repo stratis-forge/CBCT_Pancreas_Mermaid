@@ -1,0 +1,2 @@
+0|128 174 128|Small_Bowel
+1|128 0 1|Stomach_Duodenum

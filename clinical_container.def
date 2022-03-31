@@ -1,0 +1,142 @@
+Bootstrap: docker
+From: nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+
+%environment
+        ### Environment variables
+
+        #Use bash as default shell
+        SHELL=/bin/bash
+
+        #Add nvidia driver paths
+        PATH="/nvbin:$PATH"
+        LD_LIBRARY_PATH="/nvlib:$LD_LIBRARY_PATH"
+
+        #Add CUDA paths
+        CPATH="/usr/local/cuda/include:$CPATH"
+        PATH="/usr/local/cuda/bin:$PATH"
+        #LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+        LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+	CUDA_HOME="/usr/local/cuda"
+
+        #Add Python/conda paths
+        PATH=/miniconda3/bin:/miniconda3/condabin:$PATH
+        #PYTHONPATH=/software/model_wrapper:/miniconda3/bin
+
+	#Add niftyreg paths
+	PATH=/software/niftyreg/bin:$PATH
+	LD_LIBRARY_PATH=/software/niftyreg/lib:$PATH
+
+        export PATH CPATH CUDA_HOME LD_LIBRARY_PATH #PYTHONPATH
+
+%setup
+        #Runs on host, path to the image / is $SINGULARITY_ROOTFS
+        cp requirements_18.04.txt ${SINGULARITY_ROOTFS}/environment.yml
+	cp -r mermaid_wrapper ${SINGULARITY_ROOTFS}
+	cp ds_helper.py ${SINGULARITY_ROOTFS}
+	cp hash_id.txt ${SINGULARITY_ROOTFS}
+
+%post
+        #Post-setup script
+
+	. /environment
+	
+	ls /
+
+        ### Create default mount paths
+        mkdir -vp /scratch 
+
+        # Nvidia Library mount paths
+        mkdir -v /nvlib /nvbin
+
+        mkdir -v /build
+        mv -v /environment.yml /build
+
+	mv /mermaid_wrapper /software
+
+        # Update repos
+        apt update
+        apt install -y wget plastimatch unzip zip nano ffmpeg libsm6 libxext6
+
+
+        ### Install Python miniconda
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /build/Miniconda3-latest-Linux-x86_64.sh
+
+        bash /build/Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda3
+
+        export PATH=/miniconda3/bin:/miniconda3/condabin:${PATH}
+        export PYTHONPATH=/software/model_wrapper:/miniconda3/bin
+
+        conda init
+
+        conda update conda
+        echo update complete
+
+        conda env create -f /build/environment.yml
+
+	mv /ds_helper.py /miniconda3/envs/mermaid/lib/python3.7/site-packages/rt_utils
+	
+	echo "export PYTHONPATH=/software/model_wrapper:/miniconda3/bin" >> $SINGULARITY_ENVIRONMENT
+        echo ". /miniconda3/etc/profile.d/conda.sh" >> $SINGULARITY_ENVIRONMENT
+        echo "conda activate $(head -1 /build/environment.yml | cut -d' ' -f2)" >> $SINGULARITY_ENVIRONMENT
+
+##############################
+# UNC_mermaid
+##############################
+
+%apprun mermaid
+    cd /software && ./zip_staging.sh $1 $2 $3 $4 $5
+    cd /software/preprocess && python process_clinical_AWARE.py $1
+    cd /software && ./create_data_list.sh $1
+    cd /software/deep_network && python r21_clinical.py --test_list /software/data/$1/data_list.txt --saved_model ./tmp_models/model_20211004-144747/best_eval.pth.tar
+    cd /software && python mermaid_out_to_cb_space.py $1
+
+%apprun prepackage
+    cd /software && ./zip_staging.sh $1
+
+%apprun preprocess
+    cd /software/preprocess && python process_clinical_AWARE.py $1
+    cd /software && ./create_data_list.sh $1
+
+%apprun test
+    cd /software/deep_network && python r21_clinical.py --test_list /software/data/$1/data_list.txt --saved_model ./tmp_models/model_20211004-144747/best_eval.pth.tar
+
+%apprun get_hash
+    cat /hash_id.txt
+
+%apprun export
+    cd /software && python mermaid_out_to_cb_space.py $1
+
+
+##############################
+
+
+#%test
+        #Test script to run after building container
+#	. /environment
+#        python -c "import torch; print(torch.cuda.is_available())"
+
+
+%labels
+    AUTHOR EM LoCastro (locastre@mskcc.org)
+    SINGULARITY_VERSION v5.3
+
+
+%help
+
+By downloading the software for model implementations in CERR and Singularity containers, you are agreeing to the following terms and conditions as well as to the Terms of Use of CERR software.
+
+    THE SOFTWARE IS PROVIDED ?AS IS,? AND CERR DEVELOPMENT TEAM AND ITS COLLABORATORS DO NOT MAKE ANY WARRANTY, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, NOR DO THEY ASSUME ANY LIABILITY OR RESPONSIBILITY FOR THE USE OF THIS SOFTWARE.
+
+    This software is for research purposes only and has not been approved for clinical use.
+
+    Software has not been reviewed or approved by the Food and Drug Administration, and is for non-clinical, IRB-approved Research Use Only. In no event shall data or images generated through the use of the Software be used in the provision of patient care.
+
+    You may publish papers and books using results produced using software provided that you reference the appropriate citations
+
+    YOU MAY NOT DISTRIBUTE COPIES of this software, or copies of software derived from this software, to others outside your organization without specific prior written permission from the CERR development team except where noted for specific software products.
+
+    All Technology and technical data delivered under this Agreement are subject to US export control laws and may be subject to export or import regulations in other countries. You agree to comply strictly with all such laws and regulations and acknowledge that you have the responsibility to obtain such licenses to export, re-export, or import as may be required after delivery to you.l
+
+%runscript
+    exec "$@"
+

@@ -1,0 +1,3 @@
+[submodule "deep_network/mermaid"]
+	path = deep_network/mermaid
+	url = https://github.com/uncbiag/mermaid

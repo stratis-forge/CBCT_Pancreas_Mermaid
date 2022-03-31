@@ -1,0 +1,3 @@
+*.txt
+!sample_train.txt
+!sample_test.txt

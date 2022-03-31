@@ -1,0 +1,1 @@
+/software/data/PATIENT/Processed/planCT_OG/normalized_image.nii.gz /software/data/PATIENT/Processed/CBCT01_OG/normalized_image.nii.gz /software/data/PATIENT/Processed/planCT_OG/roi_label.nii.gz /software/data/PATIENT/Processed/planCT_OG/SmBowel_label.nii.gz /software/data/PATIENT/Processed/planCT_OG/StomachDuo_label.nii.gz

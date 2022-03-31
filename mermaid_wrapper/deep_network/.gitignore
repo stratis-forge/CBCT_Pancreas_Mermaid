@@ -1,0 +1,6 @@
+*.txt
+*.idea
+*.nrrd
+*.pyc
+__pycache__
+*.swp
