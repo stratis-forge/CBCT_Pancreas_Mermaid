@@ -152,5 +152,5 @@ dependencies:
     - pastel==0.2.1
     - pylev==1.4.0
     - loguru
-    - rt_utils
+    - rt_utils==1.2.1
 prefix: /miniconda3/envs/mermaid
