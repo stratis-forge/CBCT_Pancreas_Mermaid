@@ -619,6 +619,20 @@ class ProcessR21(object):
                 if "image.nii.gz" in os.path.basename(image):
                     continue
                 matched = False
+                if "LUNGS" in os.path.basename(image).upper():
+                    bin_img = sitk.ReadImage(image)
+                    stats_filt.Execute(bin_img)
+                    if stats_filt.GetLabels()[0] != 1:
+                        change_filt.SetChangeMap({stats_filt.GetLabels()[0]:1})
+                        bin_one = change_filt.Execute(bin_img)
+                        sitk.WriteImage(bin_one,os.path.join(image_folder, 'LeftLung_label.nii.gz'))
+                        sitk.WriteImage(bin_one,os.path.join(image_folder, 'RightLung_label.nii.gz'))
+                        os.remove(image)
+                    else:
+                        os.system('cp "' + image + '" ' + os.path.join(image_folder, 'LeftLung_label.nii.gz'))
+                        os.system('cp "' + image + '" ' + os.path.join(image_folder, 'RightLung_label.nii.gz'))
+                    if matched:
+                        raise ValueError("image name matched multiple label criterion")
                 if "LUNG_L" in os.path.basename(image).upper():
                     bin_img = sitk.ReadImage(image)
                     stats_filt.Execute(bin_img)
