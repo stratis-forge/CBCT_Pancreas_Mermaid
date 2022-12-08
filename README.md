@@ -44,8 +44,7 @@ Forthcoming change: code will have ability to work from single, combined "LUNGS"
 INPUTDIR=${1?Error: no input dicom dir}
 AWAREOUT=${2?Error: no output dicom dir}
 
-#EMAILDIST="aptea@mskcc.org,huj@mskcc.org,locastre@mskcc.org,magerasg@mskcc.org"
-EMAILDIST="huj@mskcc.org,locastre@mskcc.org"
+EMAILDIST="ur@home.edu"
 SERVERLIST="pllimphsing1 pllimphsing2 pllimphsing3 pllimphsing4"
 log_dir=/cluster/home/clinSegData/logs/eclipse_test
 LOGPFX=mermaid
