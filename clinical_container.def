@@ -54,7 +54,7 @@ From: nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 	mv /mermaid_wrapper /software
 
         # Update repos
-        apt update
+        apt update && apt upgrade -y
         apt install -y wget plastimatch unzip zip nano ffmpeg libsm6 libxext6
 
 
